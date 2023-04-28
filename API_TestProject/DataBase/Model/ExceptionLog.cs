@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace API_TestProject.Model.Internal
+namespace API_TestProject.DataBase.Model
 {
     public class ExceptionLog
     {

@@ -1,5 +1,7 @@
-using API_TestProject.Data;
+using API_TestProject.Core;
+using API_TestProject.DataBase;
 using API_TestProject.Swagger;
+using API_TestProject.WebApi.Controller;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +11,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddDbContext<APIContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreConnection")));
+builder.Services.AddScoped<TreeService>();
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddSwaggerGen(s => {
     s.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "API_TestProject.xml"));
     s.OperationFilter<SummaryToDescriptionFilter>();

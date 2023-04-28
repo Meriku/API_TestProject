@@ -1,11 +1,10 @@
-﻿using API_TestProject.Data;
-using API_TestProject.Model;
-using API_TestProject.Model.Request;
-using API_TestProject.Model.Response;
+﻿using API_TestProject.DataBase;
+using API_TestProject.WebApi.Model.Request;
+using API_TestProject.WebApi.Model.Response;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace API_TestProject.Controllers
+namespace API_TestProject.WebApi.Controller
 {
     [Route("Api/[controller]")]
     [ApiController]

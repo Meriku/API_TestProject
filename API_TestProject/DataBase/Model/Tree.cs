@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace API_TestProject.Model.Internal
+namespace API_TestProject.DataBase.Model
 {
     public class Tree
     {
@@ -9,6 +9,15 @@ namespace API_TestProject.Model.Internal
         public string Name { get; set; }
 
         public virtual ICollection<Node> Nodes { get; set; }
+
+        public Tree() { }
+
+        public Tree(Tree tree)
+        {
+            TreeId = tree.TreeId;
+            Name = tree.Name;
+            Nodes = tree.Nodes;
+        }
     }
 
     public class Node

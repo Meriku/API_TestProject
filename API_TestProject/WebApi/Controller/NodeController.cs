@@ -1,8 +1,9 @@
-﻿using API_TestProject.Data;
-using API_TestProject.Model;
+﻿using API_TestProject.DataBase;
+using API_TestProject.DataBase.Model;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-namespace API_TestProject.Controllers
+namespace API_TestProject.WebApi.Controller
 {
     [Route("Api/Tree/[controller]")]
     [ApiController]
@@ -22,6 +23,9 @@ namespace API_TestProject.Controllers
         [HttpPost("Create")]
         public async Task<ActionResult> CreateNode([FromQuery] string treeName, [FromQuery] int parentNodeId, [FromQuery] string nodeName)
         {
+            var tree = await _context.Trees.FirstOrDefaultAsync(x => x.Name.Equals(treeName));
+            var node = new Node() { Name = nodeName };
+
             throw new NotImplementedException();
         }
 
@@ -31,7 +35,7 @@ namespace API_TestProject.Controllers
         /// </summary>
         [HttpPost("Delete")]
         public async Task<ActionResult> DeleteNode([FromQuery] string treeName, [FromQuery] int nodeId)
-        {   
+        {
             throw new NotImplementedException();
         }
 

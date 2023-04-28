@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using API_TestProject.Model.Internal;
+using API_TestProject.DataBase.Model;
 
-namespace API_TestProject.Data
+namespace API_TestProject.DataBase
 {
     public class APIContext : DbContext
     {

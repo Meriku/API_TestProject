@@ -1,4 +1,4 @@
-﻿namespace API_TestProject.Model.Response
+﻿namespace API_TestProject.WebApi.Model.Response
 {
     public class TreeDTO
     {

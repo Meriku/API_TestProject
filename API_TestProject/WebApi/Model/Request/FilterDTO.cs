@@ -1,4 +1,4 @@
-﻿namespace API_TestProject.Model.Request
+﻿namespace API_TestProject.WebApi.Model.Request
 {
     public class FilterDTO
     {
