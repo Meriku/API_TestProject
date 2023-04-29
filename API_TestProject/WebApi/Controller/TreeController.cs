@@ -1,4 +1,5 @@
 ﻿using API_TestProject.Core;
+using API_TestProject.Core.Model;
 using API_TestProject.DataBase.Model;
 using API_TestProject.WebApi.Model.Response;
 using AutoMapper;
@@ -28,7 +29,7 @@ namespace API_TestProject.WebApi.Controller
         {
             var tree = await _treeService.GetTreeAsync(treeName);
 
-            return _mapper.Map<Tree, TreeDTO>(tree);
+            return _mapper.Map<TreeExtended, TreeDTO>(tree);
         }
     }
 }

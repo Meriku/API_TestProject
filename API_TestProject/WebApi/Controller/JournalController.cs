@@ -1,7 +1,6 @@
 ﻿using API_TestProject.DataBase;
 using API_TestProject.WebApi.Model.Request;
 using API_TestProject.WebApi.Model.Response;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_TestProject.WebApi.Controller

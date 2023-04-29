@@ -1,7 +1,6 @@
-﻿using API_TestProject.DataBase;
-using API_TestProject.DataBase.Model;
+﻿using API_TestProject.Core;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace API_TestProject.WebApi.Controller
 {
@@ -9,24 +8,26 @@ namespace API_TestProject.WebApi.Controller
     [ApiController]
     public class NodeController : ControllerBase
     {
-        private readonly APIContext _context;
-        public NodeController(APIContext context)
+        private readonly IMapper _mapper;
+        private readonly TreeService _treeService;
+
+        public NodeController(IMapper mapper, TreeService treeService)
         {
-            _context = context;
+            _mapper = mapper;
+            _treeService = treeService;
         }
 
         /// <summary>
         /// Create a new node in your tree. 
         /// You must to specify a parent node ID that belongs to your tree. 
         /// A new node name must be unique across all siblings.
+        /// Create a direct child of the tree with parent node ID = -1.
         /// </summary>
         [HttpPost("Create")]
         public async Task<ActionResult> CreateNode([FromQuery] string treeName, [FromQuery] int parentNodeId, [FromQuery] string nodeName)
         {
-            var tree = await _context.Trees.FirstOrDefaultAsync(x => x.Name.Equals(treeName));
-            var node = new Node() { Name = nodeName };
-
-            throw new NotImplementedException();
+            var result = await _treeService.CreateNode(treeName, parentNodeId, nodeName);
+            return result;
         }
 
         /// <summary>
@@ -36,7 +37,8 @@ namespace API_TestProject.WebApi.Controller
         [HttpPost("Delete")]
         public async Task<ActionResult> DeleteNode([FromQuery] string treeName, [FromQuery] int nodeId)
         {
-            throw new NotImplementedException();
+            var result = await _treeService.DeleteNode(treeName, nodeId);
+            return result;
         }
 
         /// <summary>
@@ -47,7 +49,8 @@ namespace API_TestProject.WebApi.Controller
         [HttpPost("Rename")]
         public async Task<ActionResult> RenameNode([FromQuery] string treeName, [FromQuery] int nodeId, [FromQuery] string newNodeName)
         {
-            throw new NotImplementedException();
+            var result = await _treeService.RenameNode(treeName, nodeId, newNodeName);
+            return result;
         }
     }
 }

@@ -1,11 +1,8 @@
 ﻿using API_TestProject.Core.Model;
 using API_TestProject.DataBase;
 using API_TestProject.DataBase.Model;
-using API_TestProject.WebApi.Controller;
-using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.ObjectModel;
 
 namespace API_TestProject.Core
 {
@@ -13,7 +10,6 @@ namespace API_TestProject.Core
     {
         private readonly ILogger<TreeService> _logger;
         private readonly APIContext _context;
-        private readonly IMapper _mapper;
         public TreeService(APIContext context, ILogger<TreeService> logger)
         {
             _context = context;
@@ -24,7 +20,7 @@ namespace API_TestProject.Core
         /// Method retrieves a Tree object associated with the given name from either a cache or a database. If the tree is not found in the cache, it looks for it in the database. 
         /// If it's still not found, a new tree object is created and saved to the database. Finally, the method returns the retrieved or created Tree object.
         /// </summary>
-        internal async Task<Tree> GetTreeAsync(string treeName)
+        internal async Task<TreeExtended> GetTreeAsync(string treeName)
         {
             var tree = CacheManager.GetValue<TreeExtended>(key: treeName);
 
@@ -32,7 +28,7 @@ namespace API_TestProject.Core
             { return tree; }
 
             _logger.LogInformation($"Tree with name {treeName} was not found in the cache. Starting request to the DataBase.");
-            var treeDB = await _context.Trees.FirstOrDefaultAsync(x => x.Name.Equals(treeName));
+            var treeDB = await _context.Trees.Include(t => t.Nodes.Where(n => n.ParentNodeId == null)).FirstOrDefaultAsync(x => x.Name.Equals(treeName));
             if (treeDB == null)
             {
                 _logger.LogInformation($"Tree with name {treeName} was not found in the DataBase. Initializing new tree.");
@@ -45,22 +41,197 @@ namespace API_TestProject.Core
                 await _context.SaveChangesAsync();
                 _logger.LogInformation($"Tree with name {treeName} was successfully saved to the DataBase.");
             }
-            tree = new TreeExtended(treeDB);
+            var nodes = _context.Nodes.Where(n => n.TreeId == treeDB.TreeId).ToList();
+            tree = new TreeExtended(treeDB, nodes);
             CacheManager.SetValue<TreeExtended>(tree, key: treeName);
 
             return tree;
         }
 
+        /// <summary>
+        /// This method creates a new node in a tree with a specified name and parent node ID. It then creates a new node object and adds it to the appropriate collection of nodes. 
+        /// Finally, it saves the changes to the database and returns a 200 status code.
+        /// </summary>
         internal async Task<ActionResult> CreateNode(string treeName, int parentNodeId, string nodeName)
         {
-            var tree = await _context.Trees.FirstOrDefaultAsync(x => x.Name.Equals(treeName));
-            var node = new Node() { Name = nodeName };
+            var tree = await GetTreeInternal(treeName);
 
-            throw new NotImplementedException();
+            var IsTreeSibling = parentNodeId == -1;
+            var node = new Node() { Name = nodeName, TreeId = tree.TreeId, ParentNodeId = IsTreeSibling ? null : parentNodeId };
+
+            if (IsTreeSibling)
+            {
+                CheckIsNameUnique(tree.Nodes, node);
+                tree.Nodes.Add(node);
+            }
+            else if (tree.AllNodesMap.ContainsKey(parentNodeId))
+            {
+                var parentNode = await _context.Nodes.Include(t => t.ChildrenNodes).FirstOrDefaultAsync(x => x.NodeId == parentNodeId);
+                CheckIsNameUnique(parentNode.ChildrenNodes, node);
+
+                if (parentNode.TreeId != node.TreeId)
+                {
+                    throw new SecureException($"All children nodes must belong to the same tree as their parent node.");
+                }
+
+                parentNode.ChildrenNodes.Add(node);
+                tree.AllNodesMap[parentNode.NodeId].ChildrenNodes = parentNode.ChildrenNodes;
+            }
+            else
+            {
+                throw new SecureException($"Node with id:{parentNodeId} doesn't exist in {treeName} Tree.");
+            }
+
+            _context.Nodes.Add(node);
+            await _context.SaveChangesAsync();
+            tree.AllNodesMap[node.NodeId] = node;
+
+            return new ContentResult
+            {
+                ContentType = "application/json",
+                StatusCode = 200
+            };
+        }
+
+        /// <summary>
+        /// This method deletes a node from a tree by its ID. It first checks if the node exists in the specified tree, and then checks if the node has any children nodes. 
+        /// If the node has children nodes, it throws an exception. If the node doesn't have any children nodes, it removes the node from the tree and the parent node's list of children nodes (if it has a parent node). 
+        /// Finally, it removes the node from the database and returns a JSON content result with a 200 status code.
+        /// </summary>
+        internal async Task<ActionResult> DeleteNode(string treeName, int nodeId)
+        {
+            var tree = await GetTreeInternal(treeName);
+            var node = await GetNodeInternal(tree, nodeId);
+            if (node.ChildrenNodes.Count > 0)
+            {
+                throw new SecureException($"It is not possible to delete node which has children nodes. Delete children nodes first.");
+                // The easiest implementation due to lack of time
+                // It is possible: 1) move children nodes to another parent node 2) delete all children nodes automatically not manually
+            }
+
+            if (node.ParentNodeId != null)
+            {
+                var parentNode = await _context.Nodes.Include(t => t.ChildrenNodes).FirstOrDefaultAsync(x => x.NodeId == node.ParentNodeId);
+                if (parentNode == null)
+                { throw new SecureException($"Parent node with id: {node.ParentNodeId} doesn`t exist. Contact system administrator."); }
+                if (parentNode.TreeId != tree.TreeId)
+                { throw new SecureException($"Parent node with id: {node.ParentNodeId} doesn`t exist in {treeName} tree. Contact system administrator."); }
+
+                parentNode.ChildrenNodes.Remove(node);
+                tree.AllNodesMap[parentNode.NodeId].ChildrenNodes = parentNode.ChildrenNodes;
+            }
+
+            tree.Nodes.Remove(node);
+            tree.AllNodesMap.Remove(node.NodeId);
+
+            _context.Nodes.Remove(node);
+            await _context.SaveChangesAsync();
+
+            return new ContentResult
+            {
+                ContentType = "application/json",
+                StatusCode = 200
+            };
+        }
+
+        public async Task<ActionResult> RenameNode(string treeName, int nodeId, string newNodeName)
+        {
+            var tree = await GetTreeInternal(treeName);
+            var node = await GetNodeInternal(tree, nodeId);
+
+            node.Name = newNodeName;
+
+            var IsTreeSibling = node.ParentNodeId == null;
+
+            if (IsTreeSibling)
+            {
+                CheckIsNameUnique(tree.Nodes, node);
+            }
+            else if (tree.AllNodesMap.ContainsKey((int)node.ParentNodeId))
+            {
+                var parentNode = await _context.Nodes.Include(t => t.ChildrenNodes).FirstOrDefaultAsync(x => x.NodeId == node.ParentNodeId);
+                CheckIsNameUnique(parentNode.ChildrenNodes, node);
+
+                if (parentNode.TreeId != node.TreeId)
+                {
+                    throw new SecureException($"All children nodes must belong to the same tree as their parent node.");
+                }
+            }
+            else
+            {
+                throw new SecureException($"Node with id:{node.ParentNodeId} doesn't exist in {treeName} Tree.");
+            }
+
+            await _context.SaveChangesAsync();
+
+            return new ContentResult
+            {
+                ContentType = "application/json",
+                StatusCode = 200
+            };
         }
 
 
 
+        private void CheckIsNameUnique(ICollection<Node> nodes, Node targetNode)
+        {
+            if (nodes == null)
+            { throw new ArgumentNullException(nameof(nodes)); }
+            if (targetNode == null)
+            { throw new ArgumentNullException(nameof(targetNode)); }
+            
+            if (nodes.Any(x => x.Name.Equals(targetNode.Name)))
+            {
+                var TreeOrNodeChild = targetNode.ParentNodeId == null ? "Tree" : $"node with id {targetNode.ParentNodeId}";
+                throw new SecureException($"Node with name: {targetNode.Name} can not be added as a child of {TreeOrNodeChild}. The node name must be unique across all siblings.");
+            }
+        }
 
+        private async Task<TreeExtended> GetTreeInternal(string treeName)
+        {
+            var tree = CacheManager.GetValue<TreeExtended>(key: treeName);
+
+            if (tree == null)
+            {
+                _logger.LogInformation($"Tree with name {treeName} was not found in the cache. Starting request to the DataBase.");
+                var treeDB = await _context.Trees.Include(t => t.Nodes.Where(n => n.ParentNodeId == null)).ThenInclude(n => n.ChildrenNodes).FirstOrDefaultAsync(x => x.Name.Equals(treeName));
+                if (treeDB == null)
+                {
+                    throw new SecureException($"Tree with name {treeName} doesn't exist.");
+                }
+                var nodes = _context.Nodes.Where(n => n.TreeId == treeDB.TreeId).ToList();
+                tree = new TreeExtended(treeDB, nodes);
+                CacheManager.SetValue<TreeExtended>(tree, key: treeName);
+            }
+            return tree;
+        }
+
+        private async Task<Node> GetNodeInternal(string treeName, int nodeId)
+        {
+            var tree = await GetTreeInternal(treeName);
+            if (!tree.AllNodesMap.ContainsKey(nodeId))
+            { throw new SecureException($"Node with id: {nodeId} doesn`t exist in {treeName} tree."); }
+
+            var node = await _context.Nodes.Include(t => t.ChildrenNodes).FirstOrDefaultAsync(x => x.NodeId == nodeId);
+            if (node == null)
+            { throw new SecureException($"Node with id: {nodeId} doesn`t exist."); }
+            if (node.TreeId != tree.TreeId)
+            { throw new SecureException($"Node with id: {nodeId} doesn`t exist in {treeName} tree."); }
+
+            return node;
+        }
+        private async Task<Node> GetNodeInternal(TreeExtended tree, int nodeId)
+        {
+            if (!tree.AllNodesMap.ContainsKey(nodeId))
+            { throw new SecureException($"Node with id: {nodeId} doesn`t exist in {tree.Name} tree."); }
+
+            var node = await _context.Nodes.Include(t => t.ChildrenNodes).FirstOrDefaultAsync(x => x.NodeId == nodeId);
+            if (node == null)
+            { throw new SecureException($"Node with id: {nodeId} doesn`t exist."); }
+            if (node.TreeId != tree.TreeId)
+            { throw new SecureException($"Node with id: {nodeId} doesn`t exist in {tree.Name} tree."); }
+
+            return node;
+        }
     }
 }
