@@ -6,11 +6,55 @@ namespace API_TestProject.Core
 {
     public static class CacheManager
     {
-        private static CachedItem<TreeExtended> _tree;
-        public static TreeExtended CachedTree { get { if (_tree == null) { _tree = new CachedItem<TreeExtended>(); }; return _tree.Item; } set { _tree.Item = value; } }
+        private static bool _isCacheInitialized = false;
 
+        private static Dictionary<string, CachedItem<TreeExtended>> CachedTrees;
 
-        // TODO: refactor this
+        public static TInput? GetValue<TInput>(string? key = null)
+        {
+            if (!_isCacheInitialized)
+            { InitializeCache(); }
+
+            switch (typeof(TInput).Name)
+            {
+                case nameof(TreeExtended):
+                    if (key == null)
+                        throw new ArgumentNullException(nameof(key), "Key is required to retrieve Tree from the cache");
+                    if (CachedTrees.ContainsKey(key) && CachedTrees[key].Item is TInput genericResult)
+                        return genericResult;
+                    return default;
+                default:
+                    throw new NotImplementedException();
+            }
+            
+        }
+
+        public static void SetValue<TInput>(TInput input, string? key = null)
+        {
+            switch (typeof(TInput).Name)
+            {
+                case nameof(TreeExtended):
+                    if (key == null)
+                        throw new ArgumentNullException(nameof(key), "Key is required to add Tree to the cache");
+                    if (input is TreeExtended genericResult)
+                    {
+                        if (!CachedTrees.ContainsKey(key))
+                            CachedTrees[key] = new CachedItem<TreeExtended>();
+
+                        CachedTrees[key].Item = genericResult;
+                    }
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        private static void InitializeCache()
+        {
+            CachedTrees = new Dictionary<string, CachedItem<TreeExtended>>();
+
+            _isCacheInitialized = true;
+        }
 
     }
 
@@ -20,9 +64,9 @@ namespace API_TestProject.Core
 
         private bool _isValid;
         private DateTime _updatedOn;
-        private T _item;
+        private T? _item;
 
-        public T? Item { get { return _isValid ? _updatedOn.AddMinutes(MINUTES_TO_UPDATE) > DateTime.Now ? _item : default(T) : default(T); } set { _item = value; _isValid = true; _updatedOn = DateTime.Now; } }
+        public T? Item { get { return _isValid ? _updatedOn.AddMinutes(MINUTES_TO_UPDATE) > DateTime.Now ? _item : default : default; } set { _item = value; _isValid = true; _updatedOn = DateTime.Now; } }
 
         public CachedItem() 
         {
