@@ -206,20 +206,6 @@ namespace API_TestProject.Core
             return tree;
         }
 
-        private async Task<Node> GetNodeInternal(string treeName, int nodeId)
-        {
-            var tree = await GetTreeInternal(treeName);
-            if (!tree.AllNodesMap.ContainsKey(nodeId))
-            { throw new SecureException($"Node with id: {nodeId} doesn`t exist in {treeName} tree."); }
-
-            var node = await _context.Nodes.Include(t => t.ChildrenNodes).FirstOrDefaultAsync(x => x.NodeId == nodeId);
-            if (node == null)
-            { throw new SecureException($"Node with id: {nodeId} doesn`t exist."); }
-            if (node.TreeId != tree.TreeId)
-            { throw new SecureException($"Node with id: {nodeId} doesn`t exist in {treeName} tree."); }
-
-            return node;
-        }
         private async Task<Node> GetNodeInternal(TreeExtended tree, int nodeId)
         {
             if (!tree.AllNodesMap.ContainsKey(nodeId))
