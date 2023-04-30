@@ -73,7 +73,6 @@ namespace API_TestProject.Core
                 _context.ExceptionLogs.Add(exceptionLog);
                 await _context.SaveChangesAsync();
                 _logger.LogError(jsonExceptionLogDTO);
-                Console.WriteLine(jsonExceptionLogDTO);
             }
             catch(Exception ex)
             {

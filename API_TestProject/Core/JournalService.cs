@@ -5,23 +5,86 @@ using API_TestProject.WebApi.Model.Request;
 using API_TestProject.WebApi.Model.Response;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 
 namespace API_TestProject.Core
 {
     public class JournalService
     {
-        private readonly ILogger<TreeService> _logger;
+        private readonly ILogger<JournalService> _logger;
         private readonly APIContext _context;
 
-        public JournalService(APIContext context, ILogger<TreeService> logger)
+        public JournalService(APIContext context, ILogger<JournalService> logger)
         {
             _context = context;
             _logger = logger;
         }
 
-        public async Task<EventLogListDTO> GetRange(int skip, int take, FilterDTO filter)
+        public async Task<EventLogList> GetRange(int skip, int take, FilterDTO filter)
         {
-            
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            GetFilterDates(filter, out var filterFrom, out var filterTo);
+
+            var requestHash = $"{skip}_{take}_{filterFrom}_{filterTo}";
+            var eventLogListIds = CacheManager.GetValue<EventLogs>(stringKey: requestHash);
+
+            // TODO: case when in DataBase we have new items which are suitable for the filter
+
+            var eventLogItems = new List<ExceptionLog>(0);
+            if (eventLogListIds == null)
+            {
+                _logger.LogInformation($"EventLogs was not found in the cache. Starting request to the DataBase.");
+                eventLogItems = await GetItemsFromDB(skip, take, filterFrom, filterTo);
+
+                if (eventLogItems.Count > 0)
+                {
+                    var itemIds = new int[eventLogItems.Count];
+                    var keysInCache = CacheManager.GetCachedKeys<ExceptionLog, HashSet<int>>();
+                    for (var i = 0; i < eventLogItems.Count; i++)
+                    {
+                        var eventLog = eventLogItems[i];
+                        itemIds[i] = eventLog.ExceptionLogId;
+
+                        if (!keysInCache.Contains(eventLog.ExceptionLogId))
+                            CacheManager.SetValue<ExceptionLog>(eventLog, numberKey: eventLog.ExceptionLogId);
+                    }
+                    CacheManager.SetValue<EventLogs>(new EventLogs() { Value = itemIds }, stringKey: requestHash);
+                }
+            }
+            else
+            {
+                eventLogItems = new List<ExceptionLog>(eventLogListIds.Value.Length);
+                for (var i = 0; i < eventLogListIds.Value.Length; i++)
+                {
+                    var id = eventLogListIds.Value[i];
+                    var exceptionLogItem = CacheManager.GetValue<ExceptionLog>(numberKey: id);
+                    if (exceptionLogItem == null) // This exception should never be thrown
+                    { throw new ArgumentException("Unexpected error occurred while retrieving data from cache."); }
+                    
+                    eventLogItems.Add(exceptionLogItem);
+                }
+            }
+
+            var count = _context.ExceptionLogs.Count();
+
+            eventLogItems = ApplySearchFilter(eventLogItems, filter.Search);
+
+            var result = new EventLogList()
+            {
+                Skip = skip,
+                Count = count,
+                Items = eventLogItems
+            };
+
+            stopwatch.Stop();
+            var cacheOrDataBase = eventLogListIds == null ? "Data retrieved from DataBase." : "Data retrieved from Cache.";
+            _logger.LogInformation($"JournalService: GetRange request done. Took: {stopwatch.ElapsedMilliseconds} milliseconds. Items Count: {eventLogItems.Count}. " +
+                $"{cacheOrDataBase} Filtering: From: {filterFrom != null} To: {filterTo != null} Search: {!string.IsNullOrWhiteSpace(filter.Search)}.");
+
+            return result;
         }
 
         public async Task<ExceptionLog> GetSingle(int id)
@@ -43,9 +106,62 @@ namespace API_TestProject.Core
             return exceptionLogItem;
         }
 
+        private List<ExceptionLog> ApplySearchFilter(List<ExceptionLog> items, string requestedSubString)
+        {
+            if (string.IsNullOrWhiteSpace(requestedSubString))
+            { return items; }
 
+            return items.Where(i => i.EventId.ToString().Contains(requestedSubString)).ToList();
+        }
 
+        private async Task<List<ExceptionLog>> GetItemsFromDB(int skip, int take, DateTime? filterFrom, DateTime? filterTo)
+        {
+            if (filterFrom == null && filterTo == null)
+            {
+                return await _context.ExceptionLogs.Skip(skip).Take(take).ToListAsync();
+            }
+            else if (filterFrom != null && filterTo != null)
+            {
+                return await _context.ExceptionLogs.Where(x => x.Timestamp >= filterFrom && x.Timestamp <= filterTo).Skip(skip).Take(take).ToListAsync();
+            }
+            else if (filterTo != null)
+            {
+                return await _context.ExceptionLogs.Where(x => x.Timestamp <= filterTo).Skip(skip).Take(take).ToListAsync();
+            }
+            else if (filterFrom != null)
+            {
+                return await _context.ExceptionLogs.Where(x => x.Timestamp >= filterFrom).Skip(skip).Take(take).ToListAsync();
+            }
+            throw new ArgumentException("Unexpected error occurred while retrieving data from database.");
+        }
 
+        private void GetFilterDates(FilterDTO filter, out DateTime? from, out DateTime? to)
+        {
+            from = null;
+            to = null;
+            if (filter.From != null)
+            {
+                if (DateTime.TryParse(filter.From, out var resultFrom))
+                {
+                    from = resultFrom.ToUniversalTime();
+                }
+                else
+                {
+                    throw new ArgumentException($"Filter value: From was in incorrect format - {filter.From}");
+                }
+            }
+            if (filter.To != null)
+            {
+                if (DateTime.TryParse(filter.To, out var resultTo))
+                {
+                    to = resultTo.ToUniversalTime();
+                }
+                else
+                {
+                    throw new ArgumentException($"Filter value: To was in incorrect format - {filter.To}");
+                }
+            }
+        }
 
     }
 }

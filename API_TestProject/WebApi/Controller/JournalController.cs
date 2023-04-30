@@ -31,17 +31,18 @@ namespace API_TestProject.WebApi.Controller
         [HttpPost("GetRange")]
         public async Task<ActionResult<EventLogListDTO>> GetRange([FromQuery] int skip, [FromQuery] int take, [FromBody] FilterDTO filter)
         {
-            throw new NotImplementedException();
+            var result = await _journalService.GetRange(skip, take, filter);
+            return _mapper.Map<EventLogList, EventLogListDTO>(result);
         }
 
         /// <summary>
         /// Returns the information about an particular event by ID.
         /// </summary>
         [HttpPost("GetSingle")]
-        public async Task<ActionResult<EventLogItemDTO>> GetSingle([FromQuery] int id)
+        public async Task<ActionResult<EventLogExtendedItemDTO>> GetSingle([FromQuery] int id)
         {
             var result = await _journalService.GetSingle(id);
-            return _mapper.Map<ExceptionLog, EventLogItemDTO>(result);
+            return _mapper.Map<ExceptionLog, EventLogExtendedItemDTO>(result);
         }
     }
 }

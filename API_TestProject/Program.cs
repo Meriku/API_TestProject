@@ -12,9 +12,13 @@ var builder = WebApplication.CreateBuilder(args);
 // Add configuration to the builder
 builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
+if (builder.Configuration.GetValue<string>("SecureExceptionFormat") == null)
+{ throw new ArgumentNullException("Incorrect configuration. Set correct SecureExceptionFormat in appsettings.json."); }
+
 // Add logger to the builder
 Log.Logger = new LoggerConfiguration().
     ReadFrom.Configuration(builder.Configuration).
+    WriteTo.Console().
     WriteTo.Logger(l => l
         .Filter.ByIncludingOnly(e => e.Exception?.GetType() == typeof(SecureException))
         .WriteTo.File("logs/secure_exceptions_log.txt", rollingInterval: RollingInterval.Day, outputTemplate: builder.Configuration.GetValue<string>("SecureExceptionFormat"))).

@@ -14,55 +14,93 @@ namespace API_TestProject.Core
 
         private static Dictionary<string, CachedItem<TreeExtended>> CachedTrees;
         private static Dictionary<int, ExceptionLog> CachedExceptionLogs;
+        private static Dictionary<string, EventLogs> CachedEventLogs;
 
         private static void InitializeCache()
         {
             CachedTrees = new Dictionary<string, CachedItem<TreeExtended>>();
             CachedExceptionLogs = new Dictionary<int, ExceptionLog>();
+            CachedEventLogs = new Dictionary<string, EventLogs>();
 
             _isCacheInitialized = true;
-
         }
-        public static TInput? GetValue<TInput>(string? stringKey = null)
+
+        /// <summary>
+        /// This is a generic method that returns a cached HashSet of keys for a given input type CachedValueT. 
+        /// Performs a switch statement based on the name of the input type. 
+        /// If the input type doesn't match any of the predefined types, it also throws an ArgumentException.
+        /// </summary>
+        /// <typeparam name="CachedValueT"> Type of Cached Value </typeparam>
+        /// <typeparam name="HashSetT"> Type of T in HashSet </typeparam>
+        public static HashSetT GetCachedKeys<CachedValueT, HashSetT>()
         {
             if (!_isCacheInitialized)
             { InitializeCache(); }
 
-            switch (typeof(TInput).Name)
+            switch (typeof(CachedValueT).Name)
+            {
+                case nameof(ExceptionLog):
+                    if (CachedExceptionLogs.Keys.ToHashSet() is HashSetT genericResultExceptionLog)
+                        return genericResultExceptionLog;
+                    throw new ArgumentException();
+                case nameof(TreeExtended):
+                    if (CachedTrees.Keys.ToHashSet() is HashSetT genericResultTreeExtended)
+                        return genericResultTreeExtended;
+                    throw new ArgumentException();
+                case nameof(EventLogs):
+                    if (CachedEventLogs.Keys.ToHashSet() is HashSetT genericResultEventLogs)
+                        return genericResultEventLogs;
+                    throw new ArgumentException();
+                default:
+                    throw new ArgumentException();
+            }
+        }
+        public static CachedValueT? GetValue<CachedValueT>(string? stringKey = null)
+        {
+            if (!_isCacheInitialized)
+            { InitializeCache(); }
+
+            switch (typeof(CachedValueT).Name)
             {
                 case nameof(TreeExtended):
                     if (stringKey == null)
                         throw new ArgumentNullException(nameof(stringKey), "Key is required to retrieve Tree from the cache.");
-                    if (CachedTrees.ContainsKey(stringKey) && CachedTrees[stringKey].Item is TInput genericResultTreeExtended)
+                    if (CachedTrees.ContainsKey(stringKey) && CachedTrees[stringKey].Item is CachedValueT genericResultTreeExtended)
                         return genericResultTreeExtended;
+                    return default;
+                case nameof(EventLogs):
+                    if (stringKey == null)
+                        throw new ArgumentNullException(nameof(stringKey), "Key is required to retrieve EventLogs from the cache.");
+                    if (CachedEventLogs.ContainsKey(stringKey) && CachedEventLogs[stringKey] is CachedValueT genericResultEventLogs)
+                        return genericResultEventLogs;
                     return default;
                 default:
                     throw new ArgumentException();
             }    
         }
-        public static TInput? GetValue<TInput>(int? numberKey = null)
+        public static CachedValueT? GetValue<CachedValueT>(int? numberKey = null)
         {
             if (!_isCacheInitialized)
             { InitializeCache(); }
 
-            switch (typeof(TInput).Name)
+            switch (typeof(CachedValueT).Name)
             {
                 case nameof(ExceptionLog):
                     if (numberKey == null)
                         throw new ArgumentNullException(nameof(numberKey), "Key is required to retrieve ExceptionLog from the cache.");
-                    if (CachedExceptionLogs.ContainsKey((int)numberKey) && CachedExceptionLogs[(int)numberKey] is TInput genericResultExceptionLog)
+                    if (CachedExceptionLogs.ContainsKey((int)numberKey) && CachedExceptionLogs[(int)numberKey] is CachedValueT genericResultExceptionLog)
                         return genericResultExceptionLog;
                     return default;
                 default:
                     throw new ArgumentException();
             }
         }
-        public static void SetValue<TInput>(TInput input, string? stringKey = null)
+        public static void SetValue<CachedValueT>(CachedValueT input, string? stringKey = null)
         {
             if (!_isCacheInitialized)
             { InitializeCache(); }
 
-            switch (typeof(TInput).Name)
+            switch (typeof(CachedValueT).Name)
             {
                 case nameof(TreeExtended):
                     if (stringKey == null)
@@ -75,16 +113,22 @@ namespace API_TestProject.Core
                         CachedTrees[stringKey].Item = genericResultTreeExtended;
                     }
                     break;
+                case nameof(EventLogs):
+                    if (stringKey == null)
+                        throw new ArgumentNullException(nameof(stringKey), "Key is required to add EventLogs to the cache.");
+                    if (input is EventLogs genericResultEventLogs)
+                        CachedEventLogs[stringKey] = genericResultEventLogs;
+                    break;
                 default:
                     throw new ArgumentException();
             }
         }
-        public static void SetValue<TInput>(TInput input, int? numberKey = null)
+        public static void SetValue<CachedValueT>(CachedValueT input, int? numberKey = null)
         {
             if (!_isCacheInitialized)
             { InitializeCache(); }
 
-            switch (typeof(TInput).Name)
+            switch (typeof(CachedValueT).Name)
             {
                 case nameof(ExceptionLog):
                     if (numberKey == null)
@@ -96,12 +140,12 @@ namespace API_TestProject.Core
                     throw new ArgumentException();
             }
         }
-        public static void ForceValidation<TInput>(string? stringKey = null)
+        public static void ForceValidation<CachedValueT>(string? stringKey = null)
         {
             if (!_isCacheInitialized)
             { InitializeCache(); }
 
-            switch (typeof(TInput).Name)
+            switch (typeof(CachedValueT).Name)
             {
                 case nameof(TreeExtended):
                     if (stringKey == null)
@@ -109,16 +153,22 @@ namespace API_TestProject.Core
                     if (CachedTrees.ContainsKey(stringKey))
                         CachedTrees[stringKey].ForceValidation();
                     break;
+                case nameof(EventLogs):
+                    if (stringKey == null)
+                        throw new ArgumentNullException(nameof(stringKey), "Key is required to force validation of the EventLogs in the cache.");
+                    if (CachedEventLogs.ContainsKey(stringKey))
+                        CachedEventLogs.Remove(stringKey);
+                    break;
                 default:
                     throw new ArgumentException();
             }
         }
-        public static void ForceValidation<TInput>(int? numberKey = null)
+        public static void ForceValidation<CachedValueT>(int? numberKey = null)
         {
             if (!_isCacheInitialized)
             { InitializeCache(); }
 
-            switch (typeof(TInput).Name)
+            switch (typeof(CachedValueT).Name)
             {
                 case nameof(ExceptionLog):
                     if (numberKey == null)

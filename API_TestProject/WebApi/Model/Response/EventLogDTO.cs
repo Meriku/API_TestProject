@@ -12,6 +12,12 @@
         public int id { get; set; }
         public string eventId { get; set; }
         public DateTime createdAt { get; set; }
+    }
+    public class EventLogExtendedItemDTO
+    {
+        public int id { get; set; }
+        public string eventId { get; set; }
+        public DateTime createdAt { get; set; }
         public string text { get; set; }
     }
 }

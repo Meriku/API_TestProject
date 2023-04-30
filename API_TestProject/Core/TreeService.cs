@@ -42,7 +42,7 @@ namespace API_TestProject.Core
                 await _context.SaveChangesAsync();
                 _logger.LogInformation($"Tree with name {treeName} was successfully saved to the DataBase.");
             }
-            var nodes = _context.Nodes.Where(n => n.TreeId == treeDB.TreeId).ToList();
+            var nodes = await _context.Nodes.Where(n => n.TreeId == treeDB.TreeId).ToListAsync();
             tree = new TreeExtended(treeDB, nodes);
             CacheManager.SetValue<TreeExtended>(tree, stringKey: treeName);
 
@@ -210,7 +210,7 @@ namespace API_TestProject.Core
                 {
                     throw new SecureException($"Tree with name {treeName} doesn't exist.");
                 }
-                var nodes = _context.Nodes.Where(n => n.TreeId == treeDB.TreeId).ToList();
+                var nodes = await _context.Nodes.Where(n => n.TreeId == treeDB.TreeId).ToListAsync();
                 tree = new TreeExtended(treeDB, nodes);
                 CacheManager.SetValue<TreeExtended>(tree, stringKey: treeName);
             }
