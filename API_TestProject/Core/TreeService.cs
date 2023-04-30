@@ -23,7 +23,7 @@ namespace API_TestProject.Core
         /// </summary>
         internal async Task<TreeExtended> GetTreeAsync(string treeName)
         {
-            var tree = CacheManager.GetValue<TreeExtended>(key: treeName);
+            var tree = CacheManager.GetValue<TreeExtended>(stringKey: treeName);
 
             if (tree != null)
             { return tree; }
@@ -44,7 +44,7 @@ namespace API_TestProject.Core
             }
             var nodes = _context.Nodes.Where(n => n.TreeId == treeDB.TreeId).ToList();
             tree = new TreeExtended(treeDB, nodes);
-            CacheManager.SetValue<TreeExtended>(tree, key: treeName);
+            CacheManager.SetValue<TreeExtended>(tree, stringKey: treeName);
 
             return tree;
         }
@@ -71,7 +71,7 @@ namespace API_TestProject.Core
  
                 if (parentNode == null)
                 {
-                    CacheManager.ForceValidation<TreeExtended>(key: treeName);
+                    CacheManager.ForceValidation<TreeExtended>(stringKey: treeName);
                     throw new SecureException($"Node with id:{parentNodeId} doesn't exist in {treeName} Tree.");
                 }
                 if (parentNode.TreeId != node.TreeId)
@@ -200,7 +200,7 @@ namespace API_TestProject.Core
 
         private async Task<TreeExtended> GetTreeInternal(string treeName)
         {
-            var tree = CacheManager.GetValue<TreeExtended>(key: treeName);
+            var tree = CacheManager.GetValue<TreeExtended>(stringKey: treeName);
 
             if (tree == null)
             {
@@ -212,7 +212,7 @@ namespace API_TestProject.Core
                 }
                 var nodes = _context.Nodes.Where(n => n.TreeId == treeDB.TreeId).ToList();
                 tree = new TreeExtended(treeDB, nodes);
-                CacheManager.SetValue<TreeExtended>(tree, key: treeName);
+                CacheManager.SetValue<TreeExtended>(tree, stringKey: treeName);
             }
             return tree;
         }

@@ -1,6 +1,10 @@
-﻿using API_TestProject.DataBase;
+﻿using API_TestProject.Core;
+using API_TestProject.Core.Model;
+using API_TestProject.DataBase;
+using API_TestProject.DataBase.Model;
 using API_TestProject.WebApi.Model.Request;
 using API_TestProject.WebApi.Model.Response;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_TestProject.WebApi.Controller
@@ -9,10 +13,13 @@ namespace API_TestProject.WebApi.Controller
     [ApiController]
     public class JournalController : ControllerBase
     {
-        private readonly APIContext _context;
-        public JournalController(APIContext context)
+        private readonly IMapper _mapper;
+        private readonly JournalService _journalService;
+
+        public JournalController(IMapper mapper, JournalService journalService)
         {
-            _context = context;
+            _mapper = mapper;
+            _journalService = journalService;
         }
 
         /// <summary>
@@ -33,7 +40,8 @@ namespace API_TestProject.WebApi.Controller
         [HttpPost("GetSingle")]
         public async Task<ActionResult<EventLogItemDTO>> GetSingle([FromQuery] int id)
         {
-            throw new NotImplementedException();
+            var result = await _journalService.GetSingle(id);
+            return _mapper.Map<ExceptionLog, EventLogItemDTO>(result);
         }
     }
 }

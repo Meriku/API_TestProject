@@ -29,6 +29,7 @@ builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddLogging(log => { log.ClearProviders(); log.AddSerilog(); });
 builder.Services.AddDbContext<APIContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreConnection")));
 builder.Services.AddScoped<TreeService>();
+builder.Services.AddScoped<JournalService>();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddSwaggerGen(s => {
     s.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "API_TestProject.xml"));

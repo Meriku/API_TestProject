@@ -10,7 +10,8 @@
     public class EventLogItemDTO
     {
         public int id { get; set; }
-        public int eventId { get; set; }
+        public string eventId { get; set; }
         public DateTime createdAt { get; set; }
+        public string text { get; set; }
     }
 }
