@@ -24,7 +24,7 @@ namespace API_TestProject.Core
                         return genericResult;
                     return default;
                 default:
-                    throw new NotImplementedException();
+                    throw new ArgumentException();
             }
             
         }
@@ -45,7 +45,7 @@ namespace API_TestProject.Core
                     }
                     break;
                 default:
-                    throw new NotImplementedException();
+                    throw new ArgumentException();
             }
         }
 

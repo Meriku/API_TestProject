@@ -13,6 +13,5 @@ namespace API_TestProject.DataBase
         public DbSet<Node> Nodes { get; set; }
         public DbSet<Tree> Trees { get; set; }
         public DbSet<ExceptionLog> ExceptionLogs { get; set; }
-
     }
 }

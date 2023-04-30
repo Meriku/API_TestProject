@@ -5,7 +5,6 @@ using AutoMapper;
 
 namespace API_TestProject.Core
 {
-
     public class MappingProfile : Profile
     {
         public MappingProfile()
@@ -19,6 +18,11 @@ namespace API_TestProject.Core
             CreateMap<TreeExtended, TreeDTO>().
                 ForMember(dest => dest.id, opt => opt.MapFrom(src => src.TreeId)).
                 ForMember(dest => dest.children, opt => opt.MapFrom(src => src.RootNodes));
+            CreateMap<ExceptionLog, ExceptionLogDTO>().
+                ForMember(dest => dest.type, opt => opt.MapFrom(src => src.Type)).
+                ForMember(dest => dest.id, opt => opt.MapFrom(src => src.EventId)).
+                ForMember(dest => dest.data, opt => opt.MapFrom(src => 
+                    new ExceptionLogDataDTO() { message = src.Type.Equals(nameof(SecureException)) ? src.Message : $"Internal server error ID = {src.EventId}" }));
         }
     }
 }

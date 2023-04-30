@@ -10,6 +10,7 @@ namespace API_TestProject.Core
     {
         private readonly ILogger<TreeService> _logger;
         private readonly APIContext _context;
+
         public TreeService(APIContext context, ILogger<TreeService> logger)
         {
             _context = context;
@@ -134,6 +135,11 @@ namespace API_TestProject.Core
             };
         }
 
+        /// <summary>
+        /// The method retrieves the tree and node. It then updates the node's name with the new name specified in the method parameter. 
+        /// It checks whether the node is a direct child of the tree or a child of another node within the tree, and ensures that the new name is unique within the corresponding list of nodes.
+        /// It saves the changes to the database and returns a success response with a status code of 200.
+        /// </summary>
         public async Task<ActionResult> RenameNode(string treeName, int nodeId, string newNodeName)
         {
             var tree = await GetTreeInternal(treeName);

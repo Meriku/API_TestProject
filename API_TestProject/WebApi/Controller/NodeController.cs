@@ -1,5 +1,4 @@
 ﻿using API_TestProject.Core;
-using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_TestProject.WebApi.Controller
@@ -8,12 +7,10 @@ namespace API_TestProject.WebApi.Controller
     [ApiController]
     public class NodeController : ControllerBase
     {
-        private readonly IMapper _mapper;
         private readonly TreeService _treeService;
 
-        public NodeController(IMapper mapper, TreeService treeService)
+        public NodeController(TreeService treeService)
         {
-            _mapper = mapper;
             _treeService = treeService;
         }
 

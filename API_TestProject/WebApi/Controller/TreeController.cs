@@ -28,7 +28,6 @@ namespace API_TestProject.WebApi.Controller
         public async Task<ActionResult<TreeDTO>> GetTree([FromQuery] string treeName)
         {
             var tree = await _treeService.GetTreeAsync(treeName);
-
             return _mapper.Map<TreeExtended, TreeDTO>(tree);
         }
     }
