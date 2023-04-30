@@ -68,12 +68,17 @@ namespace API_TestProject.Core
             else if (tree.AllNodesMap.ContainsKey(parentNodeId))
             {
                 var parentNode = await _context.Nodes.Include(t => t.ChildrenNodes).FirstOrDefaultAsync(x => x.NodeId == parentNodeId);
-                CheckIsNameUnique(parentNode.ChildrenNodes, node);
-
+ 
+                if (parentNode == null)
+                {
+                    CacheManager.ForceValidation<TreeExtended>(key: treeName);
+                    throw new SecureException($"Node with id:{parentNodeId} doesn't exist in {treeName} Tree.");
+                }
                 if (parentNode.TreeId != node.TreeId)
                 {
                     throw new SecureException($"All children nodes must belong to the same tree as their parent node.");
                 }
+                CheckIsNameUnique(parentNode.ChildrenNodes, node);
 
                 parentNode.ChildrenNodes.Add(node);
                 tree.AllNodesMap[parentNode.NodeId].ChildrenNodes = parentNode.ChildrenNodes;

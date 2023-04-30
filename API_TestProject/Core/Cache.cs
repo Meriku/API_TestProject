@@ -19,7 +19,7 @@ namespace API_TestProject.Core
             {
                 case nameof(TreeExtended):
                     if (key == null)
-                        throw new ArgumentNullException(nameof(key), "Key is required to retrieve Tree from the cache");
+                        throw new ArgumentNullException(nameof(key), "Key is required to retrieve Tree from the cache.");
                     if (CachedTrees.ContainsKey(key) && CachedTrees[key].Item is TInput genericResult)
                         return genericResult;
                     return default;
@@ -35,7 +35,7 @@ namespace API_TestProject.Core
             {
                 case nameof(TreeExtended):
                     if (key == null)
-                        throw new ArgumentNullException(nameof(key), "Key is required to add Tree to the cache");
+                        throw new ArgumentNullException(nameof(key), "Key is required to add Tree to the cache.");
                     if (input is TreeExtended genericResult)
                     {
                         if (!CachedTrees.ContainsKey(key))
@@ -43,6 +43,21 @@ namespace API_TestProject.Core
 
                         CachedTrees[key].Item = genericResult;
                     }
+                    break;
+                default:
+                    throw new ArgumentException();
+            }
+        }
+
+        public static void ForceValidation<TInput>(string? key = null)
+        {
+            switch (typeof(TInput).Name)
+            {
+                case nameof(TreeExtended):
+                    if (key == null)
+                        throw new ArgumentNullException(nameof(key), "Key is required to force validation of the Tree in the cache.");
+                    if (CachedTrees.ContainsKey(key) && CachedTrees[key].Item is TInput genericResult)
+                        CachedTrees[key].ForceValidation();
                     break;
                 default:
                     throw new ArgumentException();
@@ -69,6 +84,11 @@ namespace API_TestProject.Core
         public T? Item { get { return _isValid ? _updatedOn.AddMinutes(MINUTES_TO_UPDATE) > DateTime.Now ? _item : default : default; } set { _item = value; _isValid = true; _updatedOn = DateTime.Now; } }
 
         public CachedItem() 
+        {
+            _isValid = false;
+        }
+
+        public void ForceValidation()
         {
             _isValid = false;
         }
