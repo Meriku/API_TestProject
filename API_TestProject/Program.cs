@@ -1,4 +1,5 @@
 using API_TestProject.Core;
+using API_TestProject.Core.Model;
 using API_TestProject.DataBase;
 using API_TestProject.Swagger;
 using AutoMapper;

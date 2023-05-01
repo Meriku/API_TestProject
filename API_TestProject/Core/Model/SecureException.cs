@@ -1,4 +1,4 @@
-﻿namespace API_TestProject.Core
+﻿namespace API_TestProject.Core.Model
 {
     public class SecureException : Exception
     {

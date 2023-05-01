@@ -2,11 +2,8 @@
 using API_TestProject.DataBase;
 using API_TestProject.DataBase.Model;
 using API_TestProject.WebApi.Model.Request;
-using API_TestProject.WebApi.Model.Response;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
-using System.Diagnostics.Eventing.Reader;
 
 namespace API_TestProject.Core
 {
@@ -31,15 +28,14 @@ namespace API_TestProject.Core
             var requestHash = $"{skip}_{take}_{filterFrom}_{filterTo}";
             var eventLogListIds = CacheManager.GetValue<EventLogs>(stringKey: requestHash);
 
-            // TODO: case when in DataBase we have new items which are suitable for the filter
-
             var eventLogItems = new List<ExceptionLog>(0);
-            if (eventLogListIds == null)
+            if (eventLogListIds == null || eventLogListIds.Value.Length != take)
             {
-                _logger.LogInformation($"EventLogs was not found in the cache. Starting request to the DataBase.");
+                var message = eventLogListIds == null ? "EventLogs was not found in the cache." : "There is a possibility that cache is outdated.";
+                _logger.LogInformation($"{message} Starting request to the DataBase.");
                 eventLogItems = await GetItemsFromDB(skip, take, filterFrom, filterTo);
 
-                if (eventLogItems.Count > 0)
+                if (eventLogItems.Count > 0 && eventLogListIds?.Value.Length != eventLogItems.Count)
                 {
                     var itemIds = new int[eventLogItems.Count];
                     var keysInCache = CacheManager.GetCachedKeys<ExceptionLog, HashSet<int>>();
@@ -147,7 +143,7 @@ namespace API_TestProject.Core
                 }
                 else
                 {
-                    throw new ArgumentException($"Filter value: From was in incorrect format - {filter.From}");
+                    throw new ArgumentException($"Filter value: 'From' was in incorrect format - {filter.From}");
                 }
             }
             if (filter.To != null)
@@ -158,7 +154,7 @@ namespace API_TestProject.Core
                 }
                 else
                 {
-                    throw new ArgumentException($"Filter value: To was in incorrect format - {filter.To}");
+                    throw new ArgumentException($"Filter value: 'To' was in incorrect format - {filter.To}");
                 }
             }
         }
