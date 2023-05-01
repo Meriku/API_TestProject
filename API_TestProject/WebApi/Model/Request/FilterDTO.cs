@@ -4,8 +4,8 @@
     {
         public FilterDTO() { }
 
-        public string? From { get; set; }
-        public string? To { get; set; }
-        public string Search { get; set; }
+        public string? from { get; set; }
+        public string? to { get; set; }
+        public string search { get; set; }
     }
 }

@@ -1,7 +1,9 @@
 ﻿using API_TestProject.Core.Model;
 using API_TestProject.DataBase.Model;
+using API_TestProject.WebApi.Model.Request;
 using API_TestProject.WebApi.Model.Response;
 using AutoMapper;
+using System.Data;
 
 namespace API_TestProject.Core
 {
@@ -36,6 +38,10 @@ namespace API_TestProject.Core
                 ForMember(dest => dest.skip, opt => opt.MapFrom(src => src.Skip)).
                 ForMember(dest => dest.count, opt => opt.MapFrom(src => src.Count)).
                 ForMember(dest => dest.items, opt => opt.MapFrom(src => src.Items));
+            CreateMap<FilterDTO, Filter>().
+                ForMember(dest => dest.From, opt => opt.MapFrom(src => src.from)).
+                ForMember(dest => dest.To, opt => opt.MapFrom(src => src.to)).
+                ForMember(dest => dest.Search, opt => opt.MapFrom(src => src.search));
         }
     }
 }

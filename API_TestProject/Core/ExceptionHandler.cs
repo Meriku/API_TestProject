@@ -2,6 +2,8 @@
 using API_TestProject.DataBase.Model;
 using API_TestProject.WebApi.Model.Response;
 using AutoMapper;
+using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 
@@ -73,11 +75,13 @@ namespace API_TestProject.Core
                 _context.ExceptionLogs.Add(exceptionLog);
                 await _context.SaveChangesAsync();
                 _logger.LogError(jsonExceptionLogDTO);
+                Debug.WriteLine(jsonExceptionLogDTO);
             }
             catch(Exception ex)
             {
                 _logger.LogError(jsonExceptionLogDTO);
                 _logger.LogError("Unexpected error while trying to save error message in DataBase: " + ex.Message);
+                Debug.WriteLine("Unexpected error while trying to save error message in DataBase: " + ex.Message);
             }
 
             return jsonExceptionLogDTO;

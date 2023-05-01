@@ -18,7 +18,7 @@ namespace API_TestProject.Core
             _logger = logger;
         }
 
-        public async Task<EventLogList> GetRange(int skip, int take, FilterDTO filter)
+        public async Task<EventLogList> GetRange(int skip, int take, Filter filter)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -131,7 +131,7 @@ namespace API_TestProject.Core
             throw new ArgumentException("Unexpected error occurred while retrieving data from database.");
         }
 
-        private void GetFilterDates(FilterDTO filter, out DateTime? from, out DateTime? to)
+        private void GetFilterDates(Filter filter, out DateTime? from, out DateTime? to)
         {
             from = null;
             to = null;

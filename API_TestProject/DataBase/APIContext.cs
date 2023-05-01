@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using API_TestProject.DataBase.Model;
+using API_TestProject.Core;
 
 namespace API_TestProject.DataBase
 {
@@ -7,7 +8,10 @@ namespace API_TestProject.DataBase
     {
         public APIContext(DbContextOptions<APIContext> options) : base(options) 
         {
-            this.Database.EnsureCreated();   
+            if (TestsService.ShouldDataBaseBeReinitialized)
+            { this.Database.EnsureDeleted(); TestsService.IsDataBaseReinitialized = true; }
+
+            this.Database.EnsureCreated();
         }
 
         public DbSet<Node> Nodes { get; set; }

@@ -1,6 +1,5 @@
 ﻿using API_TestProject.Core;
 using API_TestProject.Core.Model;
-using API_TestProject.DataBase;
 using API_TestProject.DataBase.Model;
 using API_TestProject.WebApi.Model.Request;
 using API_TestProject.WebApi.Model.Response;
@@ -31,7 +30,8 @@ namespace API_TestProject.WebApi.Controller
         [HttpPost("GetRange")]
         public async Task<ActionResult<EventLogListDTO>> GetRange([FromQuery] int skip, [FromQuery] int take, [FromBody] FilterDTO filter)
         {
-            var result = await _journalService.GetRange(skip, take, filter);
+            var mappedFilter = _mapper.Map<FilterDTO, Filter>(filter);
+            var result = await _journalService.GetRange(skip, take, mappedFilter);
             return _mapper.Map<EventLogList, EventLogListDTO>(result);
         }
 
