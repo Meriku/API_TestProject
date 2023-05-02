@@ -5,6 +5,8 @@ using API_TestProject.WebApi.Model.Request;
 using API_TestProject.WebApi.Model.Response;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Runtime.Serialization;
 
 namespace API_TestProject.WebApi.Controller
 {
@@ -28,9 +30,9 @@ namespace API_TestProject.WebApi.Controller
         /// All fields of the filter are optional.
         /// </summary>
         [HttpPost("GetRange")]
-        public async Task<ActionResult<EventLogListDTO>> GetRange([FromQuery] int skip, [FromQuery] int take, [FromBody] FilterDTO filter)
+        public async Task<ActionResult<EventLogListDTO>> GetRange([FromQuery] int skip, [FromQuery] int take, [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] FilterDTO? filter = default)
         {
-            var mappedFilter = _mapper.Map<FilterDTO, Filter>(filter);
+            var mappedFilter = filter == null ? null : _mapper.Map<FilterDTO, Filter>(filter);
             var result = await _journalService.GetRange(skip, take, mappedFilter);
             return _mapper.Map<EventLogList, EventLogListDTO>(result);
         }

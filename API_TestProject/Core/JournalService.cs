@@ -18,7 +18,7 @@ namespace API_TestProject.Core
             _logger = logger;
         }
 
-        public async Task<EventLogList> GetRange(int skip, int take, Filter filter)
+        public async Task<EventLogList> GetRange(int skip, int take, Filter? filter)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -66,7 +66,7 @@ namespace API_TestProject.Core
 
             var count = _context.ExceptionLogs.Count();
 
-            eventLogItems = ApplySearchFilter(eventLogItems, filter.Search);
+            eventLogItems = ApplySearchFilter(eventLogItems, filter);
 
             var result = new EventLogList()
             {
@@ -78,7 +78,7 @@ namespace API_TestProject.Core
             stopwatch.Stop();
             var cacheOrDataBase = eventLogListIds == null ? "Data retrieved from DataBase." : "Data retrieved from Cache.";
             _logger.LogInformation($"JournalService: GetRange request done. Took: {stopwatch.ElapsedMilliseconds} milliseconds. Items Count: {eventLogItems.Count}. " +
-                $"{cacheOrDataBase} Filtering: From: {filterFrom != null} To: {filterTo != null} Search: {!string.IsNullOrWhiteSpace(filter.Search)}.");
+                $"{cacheOrDataBase} Filtering: From: {filterFrom != null} To: {filterTo != null} Search: {filter != null && !string.IsNullOrWhiteSpace(filter.Search)}.");
 
             return result;
         }
@@ -102,8 +102,10 @@ namespace API_TestProject.Core
             return exceptionLogItem;
         }
 
-        private List<ExceptionLog> ApplySearchFilter(List<ExceptionLog> items, string requestedSubString)
+        private List<ExceptionLog> ApplySearchFilter(List<ExceptionLog> items, Filter? filter)
         {
+            var requestedSubString = filter == null ? null : filter.Search;
+
             if (string.IsNullOrWhiteSpace(requestedSubString))
             { return items; }
 
@@ -135,6 +137,10 @@ namespace API_TestProject.Core
         {
             from = null;
             to = null;
+
+            if (filter == null)
+            { return; }
+
             if (filter.From != null)
             {
                 if (DateTime.TryParse(filter.From, out var resultFrom))

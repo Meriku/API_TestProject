@@ -3,6 +3,7 @@ using API_TestProject.Core.Model;
 using API_TestProject.DataBase;
 using API_TestProject.Swagger;
 using AutoMapper;
+using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +18,7 @@ namespace API_TestProject
         {
             var isRunningInTestContext = args.Any(arg => arg.StartsWith("--environment=") && arg.EndsWith("Development"));
 
-            var builder = WebApplication.CreateBuilder(args);
+            var builder = WebApplication.CreateBuilder(args); 
 
             // Add configuration to the builder
             builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
